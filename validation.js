@@ -1,6 +1,9 @@
 const joi = require("Joi");
 const express = require("express");
+// const cookieParser = require("cookie-parser");
+const sessions = require("express-session");
 const app = express();
+var session;
 
 userSchema = joi.object({
   email: joi.string().email().required(),
@@ -10,9 +13,19 @@ userSchema = joi.object({
     .required(),
 });
 
+const oneDay = 1000 * 60 * 60 * 24;
 const users = [];
 
 app.use(express.json());
+app.use(
+  sessions({
+    secret: "123456",
+    saveUninitialized: "true",
+    cookie: { maxAge: oneDay },
+    resave: false,
+  })
+);
+// app.use(cookieParser());
 
 app.get("/users", (req, res) => {
   res.json(users);
@@ -22,7 +35,7 @@ app.post("/signup", (req, res) => {
   const data = req.body;
   const validation = userSchema.validate(data);
   if (validation.error !== undefined) {
-    res.status(400).send("Invalid Password");
+    res.status(400).send("Invalid Username or Password");
     return;
   }
   for (i = 0; i < users.length; i++) {
@@ -35,9 +48,26 @@ app.post("/signup", (req, res) => {
   res.send("User Created");
   console.log(users);
 });
-
-app.post("/recipes", (req, res) => {
-  res.send("access recipes");
+app.post("/signin", (req, res) => {
+  for (i = 0; i < users.length; i++) {
+    if (
+      req.body.email === users[i].email &&
+      req.body.password === users[i].password
+    ) {
+      session = req.session;
+      session.userid = req.body.email;
+      console.log(req.session);
+      res.send(`Welcome ${session.userid}!`);
+      return;
+    }
+    res.send("Invalid username or password");
+    console.log(users[i].email);
+  }
+});
+app.get("/recipes", (req, res) => {
+  session === undefined
+    ? res.status(400).send("Please Log In")
+    : res.send("A List of Recipes");
 });
 
 app.listen(3001, () => {
