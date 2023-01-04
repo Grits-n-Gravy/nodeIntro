@@ -3,7 +3,6 @@ const express = require("express");
 // const cookieParser = require("cookie-parser");
 const sessions = require("express-session");
 const app = express();
-var session;
 
 userSchema = joi.object({
   email: joi.string().email().required(),
@@ -54,18 +53,18 @@ app.post("/signin", (req, res) => {
       req.body.email === users[i].email &&
       req.body.password === users[i].password
     ) {
-      session = req.session;
+      let session = req.session;
       session.userid = req.body.email;
       console.log(req.session);
       res.send(`Welcome ${session.userid}!`);
       return;
     }
-    res.send("Invalid username or password");
     console.log(users[i].email);
   }
+  res.send("Invalid username or password");
 });
 app.get("/recipes", (req, res) => {
-  session === undefined
+  req.session === undefined
     ? res.status(400).send("Please Log In")
     : res.send("A List of Recipes");
 });
